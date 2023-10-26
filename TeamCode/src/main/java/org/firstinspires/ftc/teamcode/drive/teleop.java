@@ -14,14 +14,24 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @Config
 public class teleop extends OpMode {
 
-    //lift
+    //lift var
     public static int top = 0;
     public static int bottom = 100;
     public static int var  = 100;
-    public static double power = 1;
+    //winch var
+    public static int extend = 500;
+    public static int retract = 200;
+
+
+    //lift power
+    public static double lPower = 1;
+    //winch power
+    public static double wPower = 1;
 
 //motor
     private DcMotorEx lift;
+    private DcMotorEx winch;
+
     private DcMotorEx RF;
     private DcMotorEx RB;
     private DcMotorEx LF;
@@ -38,19 +48,23 @@ public class teleop extends OpMode {
         LF= hardwareMap.get(DcMotorEx.class, "LF");
         LB = hardwareMap.get(DcMotorEx.class, "LB");
 
-        LF.setDirection(DcMotorEx.Direction.REVERSE);
-        LB.setDirection(DcMotorEx.Direction.REVERSE);
+        RF.setDirection(DcMotorEx.Direction.REVERSE);
+        RB.setDirection(DcMotorEx.Direction.REVERSE);
 
 
         RF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         RB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LF.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         LB.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-/*        //lift
+/*
+       //lift
         lift = hardwareMap.get(DcMotorEx.class, "lift");
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        winch = hardwareMap.get(DcMotorEx.class, "winch");
+        winch.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 */
 
 
@@ -58,10 +72,20 @@ public class teleop extends OpMode {
 
     @Override
     public void loop() {
-//drive
+
+        /*///////
+        VARIABLE
+        *////////
+
         double drive = -gamepad1.left_stick_y;
         double rotate = gamepad1.right_stick_x;
         double d_power = .8-.4*gamepad1.left_trigger+(.5*gamepad1.right_trigger);
+
+        /*////////////////
+        DRIVER 1 CONTROLS
+        *////////////////
+
+        //drive
 
         RF.setPower(drive + rotate);
         RB.setPower(drive + rotate);
@@ -92,7 +116,23 @@ public class teleop extends OpMode {
             LF.setPower(d_power);
             LB.setPower(-d_power);
         }
-/*
+
+        //winch
+
+        if (gamepad1.y) {
+            winch.setTargetPosition(extend);
+            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            winch.setPower(wPower);
+        }
+        if (gamepad1.a) {
+            winch.setTargetPosition(retract);
+            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            winch.setPower(wPower);
+        }
+
+            /*////////////////
+            DRIVER 2 CONTROLS
+            *////////////////
 
         //lift
         if (gamepad2.y) {
@@ -105,17 +145,19 @@ public class teleop extends OpMode {
         if (gamepad2.b) {
             lift.setTargetPosition(top);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            lift.setPower(power);
+            lift.setPower(lPower);
         }
         if (gamepad2.x) {
             lift.setTargetPosition(bottom);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            lift.setPower(power);
+            lift.setPower(lPower);
         }
+
+        //telemetry
 
         telemetry.addData("lift pos", lift.getCurrentPosition());
         telemetry.addData("lift power", lift.getPower());
-        telemetry.update(); */
+        telemetry.update();
     }
 
 
