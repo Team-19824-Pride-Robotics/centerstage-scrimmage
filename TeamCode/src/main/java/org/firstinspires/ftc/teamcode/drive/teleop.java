@@ -133,7 +133,7 @@ public class teleop extends OpMode {
             /*////////////////
             DRIVER 2 CONTROLS
             *////////////////
-
+/*
         //lift
         if (gamepad2.y) {
             top = top + var;
@@ -157,7 +157,7 @@ public class teleop extends OpMode {
 
         telemetry.addData("lift pos", lift.getCurrentPosition());
         telemetry.addData("lift power", lift.getPower());
-        telemetry.update();
+        telemetry.update(); */
     }
 
 
