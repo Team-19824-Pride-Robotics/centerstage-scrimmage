@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.drive;
 
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -8,28 +9,50 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.util.Range;
 
 
 @TeleOp(group = "drive")
 @Config
 public class teleop extends OpMode {
 
+    //gamepad
+    Gamepad currentGamepad1 = new Gamepad();
+    Gamepad currentGamepad2 = new Gamepad();
+
+    Gamepad previousGamepad1 = new Gamepad();
+    Gamepad previousGamepad2 = new Gamepad();
+    //intake control
+    boolean intakeForward = false;
+    boolean intakeBack = false;
+
     //lift var
-    public static int top = 0;
-    public static int bottom = 100;
-    public static int var  = 100;
+    public static int top = 1000;
+    public static int bottom = 400;
+    public static int var  = 50;
     //winch var
-    public static int extend = 500;
-    public static int retract = 200;
+    public static int extend = 2000;
+    public static int retract = 1900;
+
+    public static int start = -100;
+
+    boolean winchToggle = false;
+
 
 
     //lift power
     public static double lPower = 1;
     //winch power
     public static double wPower = 1;
+
+    public static double raVar = 100;
+    public static double laVar = 100;
+    public static double rbVar = 100;
+    public static double lbVar = 100;
 
 //motor
     private DcMotorEx lift;
@@ -80,6 +103,7 @@ public class teleop extends OpMode {
         lift = hardwareMap.get(DcMotorEx.class, "lift");
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         lift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        lift.setDirection(DcMotorEx.Direction.REVERSE);
 
         //winch
         winch = hardwareMap.get(DcMotorEx.class, "winch");
@@ -102,19 +126,26 @@ public class teleop extends OpMode {
         rArm.setPwmRange(new PwmControl.PwmRange(505, 2495));
         lArm.setPwmRange(new PwmControl.PwmRange(505, 2495));
 
-        rbEncoder = hardwareMap.get(AnalogInput.class, "sEncoder");
-        lbEncoder = hardwareMap.get(AnalogInput.class, "sEncoder");
-        raEncoder = hardwareMap.get(AnalogInput.class, "sEncoder");
-        laEncoder = hardwareMap.get(AnalogInput.class, "sEncoder");
+        rbEncoder = hardwareMap.get(AnalogInput.class, "rbEncoder");
+        lbEncoder = hardwareMap.get(AnalogInput.class, "lbEncoder");
+        raEncoder = hardwareMap.get(AnalogInput.class, "raEncoder");
+        laEncoder = hardwareMap.get(AnalogInput.class, "laEncoder");
 
     }
 
     @Override
     public void loop() {
 
+        //store gamepad input
+        previousGamepad1.copy(currentGamepad1);
+        previousGamepad2.copy(currentGamepad2);
+        currentGamepad1.copy(gamepad1);
+        currentGamepad2.copy(gamepad2);
+
         /*///////
         VARIABLE
         *////////
+
 
         double drive = -gamepad1.left_stick_y;
         double rotate = gamepad1.right_stick_x;
@@ -139,6 +170,7 @@ public class teleop extends OpMode {
         RB.setPower(drive + rotate);
         LF.setPower(drive + rotate);
         LB.setPower(drive + rotate);
+
 
         //trigger strafe control
         if (gamepad1.right_trigger<.1) {
@@ -182,14 +214,23 @@ public class teleop extends OpMode {
         //winch
 
         if (gamepad1.y) {
+            winch.setTargetPosition(start);
+            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            winch.setPower(wPower);
+        }
+
+        if (currentGamepad1.a && !previousGamepad1.a) {
+            winchToggle = !winchToggle;
+        }
+        if (winchToggle) {
             winch.setTargetPosition(extend);
             winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             winch.setPower(wPower);
         }
-        if (gamepad1.a) {
-            winch.setTargetPosition(retract);
-            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            winch.setPower(wPower);
+        else {
+        winch.setTargetPosition(retract);
+        winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        winch.setPower(wPower);
         }
 
             /*////////////////
@@ -216,21 +257,43 @@ public class teleop extends OpMode {
         }
 
         //intake
-
-        if (gamepad1.right_bumper){
+        if (currentGamepad2.left_bumper && !previousGamepad2.left_bumper) {
+            intakeForward = !intakeForward;
+        }
+        if (intakeForward) {
             intake.setPower(1);
         }
         else {
             intake.setPower(0);
         }
 
-        if(gamepad1.left_bumper){
+        if (currentGamepad2.right_bumper && !previousGamepad2.right_bumper) {
+            intakeBack = !intakeBack;
+        }
+        if (intakeBack) {
             intake.setPower(-1);
         }
         else {
             intake.setPower(0);
         }
 
+        raVar =  Range.clip(raVar, 5, 355);
+        laVar = Range.clip(laVar, 5, 355);
+
+        if (gamepad2.right_stick_y < .2 || gamepad2.right_stick_y > -.2) {
+            laVar = laVar + gamepad2.right_stick_y *10;
+            raVar = raVar + gamepad2.right_stick_y *10;
+        }
+
+        if (gamepad2.left_stick_y < .2 || gamepad2.left_stick_y > -.2) {
+            lbVar = lbVar + gamepad2.left_stick_y;
+            rbVar = rbVar + gamepad2.left_stick_y;
+        }
+
+        rBucket.setPosition(rbVar * .0028);
+        lBucket.setPosition(lbVar * .0028);
+        lArm.setPosition(laVar * .0028);
+        rArm.setPosition(raVar * .0028);
 
         //telemetry
 
@@ -242,6 +305,12 @@ public class teleop extends OpMode {
         telemetry.addData("left bucket pos", lbPos);
         telemetry.addData("right arm pos", raPos);
         telemetry.addData("left arm pos", laPos);
+        telemetry.addData("rbVar", rbVar);
+        telemetry.addData("lbVar", lbVar);
+        telemetry.addData("raVar", raVar);
+        telemetry.addData("laVar", laVar);
+
+
 
         telemetry.update();
     }
