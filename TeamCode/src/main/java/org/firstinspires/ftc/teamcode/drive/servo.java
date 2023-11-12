@@ -19,7 +19,9 @@ public class servo extends OpMode {
     public static double b = 0.01;
     public static double a = .5;
     public static double x = .99;
-
+    public static double bo = 0.01;
+    public static double ao = .5;
+    public static double xo = .99;
     ServoImplEx servo;
     ServoImplEx servo2;
 
@@ -51,15 +53,15 @@ public class servo extends OpMode {
 
         if (gamepad1.a) {
             servo.setPosition(a);
-            servo2.setPosition(a);
+            servo2.setPosition(ao);
         }
         if (gamepad1.b) {
             servo.setPosition(b);
-            servo2.setPosition(b);
+            servo2.setPosition(bo);
         }
         if (gamepad1.x) {
             servo.setPosition(x);
-            servo2.setPosition(x);
+            servo2.setPosition(xo);
         }
         telemetry.addData("Run time",getRuntime());
         telemetry.addData("pos1", pos);

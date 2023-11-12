@@ -31,8 +31,8 @@ public class teleop extends OpMode {
     boolean intakeBack = false;
 
     //lift var
-    public static int top = 1000;
-    public static int bottom = 400;
+    public static int top = 1200;
+    public static int bottom = 420;
     public static int var  = 50;
     //winch var
     public static int extend = 2000;
@@ -49,10 +49,14 @@ public class teleop extends OpMode {
     //winch power
     public static double wPower = 1;
 
-    public static double raVar = 100;
-    public static double laVar = 100;
-    public static double rbVar = 100;
-    public static double lbVar = 100;
+    double aVar;
+    public static double rbVar = 64;
+    public static double lbVar = 53;
+
+    public static double rbPosx = .18;
+    public static double lbPosx = .15;
+
+    double aPos;
 
 //motor
     private DcMotorEx lift;
@@ -148,7 +152,9 @@ public class teleop extends OpMode {
 
 
         double drive = -gamepad1.left_stick_y;
-        double rotate = gamepad1.right_stick_x;
+        double rotatel = gamepad1.right_stick_x;
+        double rotater = -gamepad1.right_stick_x;
+
         //gamepad
         double d_power = .5;
         //strafe
@@ -162,14 +168,14 @@ public class teleop extends OpMode {
 
         /*////////////////
         DRIVER 1 CONTROLS
-        *////////////////
+        */////////////// /q
 
         //drive
 
-        RF.setPower(drive + rotate);
-        RB.setPower(drive + rotate);
-        LF.setPower(drive + rotate);
-        LB.setPower(drive + rotate);
+        RF.setPower(drive + rotatel);
+        RB.setPower(drive + rotatel);
+        LF.setPower(drive + rotater);
+        LB.setPower(drive + rotater);
 
 
         //trigger strafe control
@@ -213,24 +219,18 @@ public class teleop extends OpMode {
 
         //winch
 
-        if (gamepad1.y) {
+        if (gamepad1.b) {
             winch.setTargetPosition(start);
-            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             winch.setPower(wPower);
         }
-
-        if (currentGamepad1.a && !previousGamepad1.a) {
-            winchToggle = !winchToggle;
-        }
-        if (winchToggle) {
+        if (gamepad1.y) {
             winch.setTargetPosition(extend);
-            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            winch.setPower(wPower);
+            winch.setPower(.5);
         }
-        else {
-        winch.setTargetPosition(retract);
-        winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        winch.setPower(wPower);
+        if (gamepad1.a) {
+            winch.setTargetPosition(retract);
+            winch.setPower(wPower);
+
         }
 
             /*////////////////
@@ -276,13 +276,18 @@ public class teleop extends OpMode {
         else {
             intake.setPower(0);
         }
+        aPos =  Range.clip(aPos, .15, .99);
+        aVar =  Range.clip(aVar, 53, 355);
 
-        raVar =  Range.clip(raVar, 5, 355);
-        laVar = Range.clip(laVar, 5, 355);
+        lbVar =  Range.clip(lbVar, 53, 215);
+        rbVar =  Range.clip(rbVar, 64, 225);
+        lbPosx =  Range.clip(lbPosx, .15, .6);
+        rbPosx =  Range.clip(rbPosx, .18, .63);
+
+
 
         if (gamepad2.right_stick_y < .2 || gamepad2.right_stick_y > -.2) {
-            laVar = laVar + gamepad2.right_stick_y *10;
-            raVar = raVar + gamepad2.right_stick_y *10;
+            aVar = aVar + gamepad2.right_stick_y *10;
         }
 
         if (gamepad2.left_stick_y < .2 || gamepad2.left_stick_y > -.2) {
@@ -290,10 +295,14 @@ public class teleop extends OpMode {
             rbVar = rbVar + gamepad2.left_stick_y;
         }
 
-        rBucket.setPosition(rbVar * .0028);
-        lBucket.setPosition(lbVar * .0028);
-        lArm.setPosition(laVar * .0028);
-        rArm.setPosition(raVar * .0028);
+        aPos = aVar * .0028;
+        lbPosx= lbVar *.0028;
+        rbPosx= rbVar *.0028;
+
+        rBucket.setPosition(rbPosx);
+        lBucket.setPosition(lbPosx);
+        lArm.setPosition(aPos);
+        rArm.setPosition(aPos);
 
         //telemetry
 
@@ -307,8 +316,8 @@ public class teleop extends OpMode {
         telemetry.addData("left arm pos", laPos);
         telemetry.addData("rbVar", rbVar);
         telemetry.addData("lbVar", lbVar);
-        telemetry.addData("raVar", raVar);
-        telemetry.addData("laVar", laVar);
+        telemetry.addData("aVar", aVar);
+        telemetry.addData("aPos", aPos);
 
 
 
