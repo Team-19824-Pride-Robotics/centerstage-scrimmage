@@ -183,7 +183,7 @@ if (gamepad2.dpad_down) {
      servo1.setPosition(sPos);
 }
 
-telemetry.addData("elevpos", winch.getCurrentPosition());
+        telemetry.addData("elevpos", winch.getCurrentPosition());
         telemetry.addData("extend pos", extend);
 
 

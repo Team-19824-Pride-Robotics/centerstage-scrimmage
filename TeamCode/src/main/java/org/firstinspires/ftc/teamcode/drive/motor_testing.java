@@ -29,12 +29,18 @@
 
 package org.firstinspires.ftc.teamcode.drive;
 
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 
 /*
@@ -51,30 +57,33 @@ import com.qualcomm.robotcore.util.Range;
  */
 
 @TeleOp(name="motor_testing")
+@Config
 //@Disabled
 public class motor_testing extends LinearOpMode {
 
     // Declare OpMode members.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftDrive = null;
+    private DcMotorEx winch = null;
     private DcMotor rightDrive = null;
+    private DistanceSensor sensorDistance;
+    public static int extend = 1600;
+    public static int retract = 300;
+
+    public static int start = -800;
+    public static double winchup = .5;
+    public static double winchdown = 1;
+
 
     @Override
     public void runOpMode() {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        // Initialize the hardware variables. Note that the strings used here as parameters
-        // to 'get' must correspond to the names assigned during the robot configuration
-        // step (using the FTC Robot Controller app on the phone).
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+        winch  = hardwareMap.get(DcMotorEx.class, "winch");
         rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        sensorDistance = hardwareMap.get(DistanceSensor.class, "sensor_distance");
 
-        // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
-        // Pushing the left stick forward MUST make robot go forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
@@ -83,49 +92,54 @@ public class motor_testing extends LinearOpMode {
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
 
-            // Setup a variable for each drive wheel to save power level for telemetry
-            double leftPower;
-            double rightPower;
+            if (gamepad2.y) {
+                winch.setTargetPosition(extend);
+                winch.setPower(winchup);
+                winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }
 
-            // Choose to drive using either Tank Mode, or POV Mode
-            // Comment out the method that's not used.  The default below is POV.
+            if (gamepad2.a) {
+                winch.setTargetPosition(retract);
 
-            // POV Mode uses left stick to go forward, and right stick to turn.
-            // - This uses basic math to combine motions and is easier to drive straight.
-//            double drive = -gamepad1.left_stick_y;
-//            double turn  =  gamepad1.right_stick_x;
-//            leftPower    = Range.clip(drive + turn, -1.0, 1.0) ;
-//            rightPower   = Range.clip(drive - turn, -1.0, 1.0) ;
+                winch.setPower(winchdown);
+                winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            // Tank Mode uses one stick to control each wheel.
-            // - This requires no math, but it is hard to drive forward slowly and keep straight.
-            // leftPower  = -gamepad1.left_stick_y ;
-             //rightPower = -gamepad1.right_stick_y ;
 
-             if(gamepad1.a) {
-                 leftDrive.setPower(1);
-                 rightDrive.setPower(1);
-             }
+            }
+            if (gamepad2.b) {
+                winch.setTargetPosition(start);
+                winch.setPower(winchdown);
+                winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            if(gamepad1.b) {
-                leftDrive.setPower(-1);
+
+            }
+
+            if (gamepad2.x){
+                extend += 100;
+            }
+            if (gamepad2.dpad_up){
+                extend -= 100;
+            }
+
+            if(gamepad1.a){
+                rightDrive.setPower(1);
+            }
+
+            if(gamepad1.b){
                 rightDrive.setPower(-1);
             }
-
             else {
-                leftDrive.setPower(0);
                 rightDrive.setPower(0);
             }
-
 
 
             // Send calculated power to wheels
 //            leftDrive.setPower(leftPower);
 //            rightDrive.setPower(rightPower);
 
-            // Show the elapsed game time and wheel power.
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            //telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("elevpos", winch.getCurrentPosition());
+            telemetry.addData("extend pos", extend);
+            telemetry.addData("range", String.format("%.01f cm", sensorDistance.getDistance(DistanceUnit.CM)));
             telemetry.update();
         }
     }
